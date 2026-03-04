@@ -2,22 +2,31 @@ bundle:
   name: mcp-server-grants-gov
   databricks_cli_version: ">=0.218.0"
 
-# Files/globs included in the bundle package (paths are relative to the bundle file)
+# ONLY YAML/JSON bundle config files belong here
 include:
   - 'bundle/resources/*.yml'
-  - 'app.yaml'
-  - 'dist/*.whl'        # built wheel output (CI will put wheel here)
-  - 'src/**'            # include source if you want it copied to workspace
-  - 'pyproject.toml'
+  - 'app.yaml'                # OK (YAML)
+  # DO NOT include dist/*.whl, src/**, or pyproject.toml here
 
-# Artifacts may be declared in the separate artifacts.yml
+# What files to sync to workspace during deploy (non-YAML resources)
+sync:
+  include:
+    - 'dist/*.whl'            # include built wheel(s) for deploy
+    - 'src/**'                # include source if you want it copied to workspace
+  exclude:
+    - '.git/**'
+    - '.venv/**'
+
+# Artifacts: describe how to build and where the built files are
 artifacts:
   default:
     type: whl
-    path: .                       # relative to databricks.yml (repo root)
+    path: .                    # path where build runs (setup.py/pyproject root)
     build: python -m build --no-isolation
-    output: dist/*.whl
     dynamic_version: false
+    files:
+      - source: dist/*.whl     # <-- use 'files.source' (not 'output') to point to built wheel(s)
+
 
 targets:
   dev:
