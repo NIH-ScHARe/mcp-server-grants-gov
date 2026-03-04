@@ -2,37 +2,45 @@ bundle:
   name: mcp-server-grants-gov
   databricks_cli_version: ">=0.218.0"
 
-# ONLY YAML/JSON bundle config files belong here
-include:
-  - 'bundle/resources/*.yml'
-  - 'app.yaml'                # OK (YAML)
-  # DO NOT include dist/*.whl, src/**, or pyproject.toml here
+variables:
+  ENV:
+    default: dev
+    description: "Deployment environment (overridden by target variables)"
 
-# What files to sync to workspace during deploy (non-YAML resources)
+# include only files that should be synced/packaged
 sync:
   include:
-    - 'dist/*.whl'            # include built wheel(s) for deploy
-    - 'src/**'                # include source if you want it copied to workspace
+    - 'app.yaml'
+    - 'dist/*.whl'
+    - 'src/**'
   exclude:
     - '.git/**'
-    - '.venv/**'
 
-# Artifacts: describe how to build and where the built files are
+# resource definitions embedded here to avoid include ambiguities:
+apps:
+  grants_gov_mcp_server:
+    name: mcp-server-grants-gov
+    app:
+      workspace_path: "${bundle.targets.${bundle.target}.workspace.root_path}/mcp-server"
+      app_spec_path: "app.yaml"
+      libraries:
+        - whl: "../dist/*.whl"
+      env:
+        APP_ENV: "${bundle.targets.${bundle.target}.variables.ENV}"
+
 artifacts:
   default:
     type: whl
-    path: .                    # path where build runs (setup.py/pyproject root)
+    path: .
     build: python -m build --no-isolation
     dynamic_version: false
     files:
-      - source: dist/*.whl     # <-- use 'files.source' (not 'output') to point to built wheel(s)
-
+      - source: dist/*.whl
 
 targets:
   dev:
     default: true
     workspace:
-      host: ${env.DATABRICKS_HOST}
       root_path: /Workspace/mcp-tiger-team/mcp-server-repos
     variables:
       ENV: dev

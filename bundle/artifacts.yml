@@ -1,7 +1,0 @@
-artifacts:
-  default:
-    type: whl
-    path: .                       # relative to repo root
-    build: python -m build --no-isolation
-    output: dist/*.whl
-    dynamic_version: false
